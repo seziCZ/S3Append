@@ -4,16 +4,24 @@
     <TargetFramework>net5.0</TargetFramework>
     <Authors>Tomas Sezima</Authors>
     <Company>Datamole</Company>
-    <Description>Provides AWS S3 client extension method that allows for efficient data appends to existing S3 objects.</Description>
+    <Title>.NET AWS SDK S3 Append</Title>    
+    <Description>Provides AWS S3 client extension method that allows for efficient data appends to existing S3 objects.</Description>    
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <Copyright>Copyright (c) Datamole 2022</Copyright>
+    <PackageId>S3Append</PackageId>
     <PackageProjectUrl>https://github.com/sezicz/s3append</PackageProjectUrl>
-    <PackageTags>S3, data append</PackageTags>
+    <RepositoryUrl>https://github.com/seziCZ/S3Append.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageReleaseNotes>Public beta, please report back in case of problems</PackageReleaseNotes>
+    <PackageTags>AWS SDK;S3;Append</PackageTags>    
+    <LangVersion>9.0</LangVersion>
+    <OutputType>Library</OutputType>
     <Version>0.0.1</Version>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AWSSDK.S3" Version="*" />
+    <PackageReference Include="AWSSDK.S3" Version="3.7.5" />
   </ItemGroup>
 
 </Project>
