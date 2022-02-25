@@ -60,7 +60,7 @@ namespace Tests.Unit.Extensions
         public void TestLowerTwoParts()
         {
             // setup
-            var expSize = S3ClientExtensions.PART_OPT_BYTES + S3ClientExtensions.PART_MIN_BYTES ;
+            var expSize = S3ClientExtensions.PART_OPT_BYTES + S3ClientExtensions.PART_MIN_BYTES;
             var expResult = new List<Tuple<long, long>>()
             {
                 Tuple.Create(0L, S3ClientExtensions.PART_OPT_BYTES - 1),

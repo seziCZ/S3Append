@@ -125,7 +125,7 @@ namespace S3Append.Extensions
             {
                 var lastByte =
                     firstByte + PART_OPT_BYTES - 1 < totalBytes - 1 ?
-                    firstByte + PART_OPT_BYTES - 1:
+                    firstByte + PART_OPT_BYTES - 1 :
                     totalBytes - 1;
 
                 result.Add(Tuple.Create(firstByte, lastByte));

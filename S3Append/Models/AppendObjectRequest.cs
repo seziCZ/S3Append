@@ -98,7 +98,7 @@ namespace S3Append.Models
                 contentStream.CopyTo(compositeStream);
                 FilePath = null;
             }
-            else if(InputStream is not null)
+            else if (InputStream is not null)
             {
                 if (AutoResetStreamPosition && InputStream.CanSeek)
                     InputStream.Seek(0, SeekOrigin.Begin);
