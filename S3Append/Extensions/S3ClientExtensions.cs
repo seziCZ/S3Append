@@ -32,8 +32,10 @@ namespace S3Append.Extensions
     /// </summary>
     public static class S3ClientExtensions
     {
-        internal static readonly long PART_MIN_BYTES = 5 * (long)Math.Pow(2, 20); // aka 5 MiB, must not be bigger than PART_OPT_BYTES
-        internal static readonly long PART_OPT_BYTES = 1 * (long)Math.Pow(2, 30); // aka 1 GiB, must not be bigger than ~ 4.9 GiB
+        // Must be 5 MiB <= PART_MIN_BYTES < PART_OPT_BYTES <= 5 GiB - PART_MIN_BYTES 
+        // See https://docs.aws.amazon.com/AmazonS3/latest/userguide/qfacts.html
+        internal static readonly long PART_MIN_BYTES = 5 * (long)Math.Pow(2, 20); // aka 5 MiB
+        internal static readonly long PART_OPT_BYTES = 4 * (long)Math.Pow(2, 30); // aka 4 GiB
 
         /// <summary>
         /// Appends data associated with provided <see cref="AppendObjectRequest"/> to referenced, S3 hosted object.
@@ -49,9 +51,9 @@ namespace S3Append.Extensions
             InitiateMultipartUploadResponse initMultipartRes = null;
             try
             {
-                // ...if existing object is smaller than 5 MB, append "in memory"
+                // ...if existing object is smaller than PART_MIN_BYTES, append "in memory"
                 var metadata = await s3Client.GetObjectMetadataAsync(request.BucketName, request.Key, cancellationToken);
-                if (metadata.ContentLength < PART_MIN_BYTES && !cancellationToken.IsCancellationRequested)
+                if (metadata.ContentLength < PART_MIN_BYTES)
                 {
                     var getReq = request.ToGetObjectRequest();
                     using var getRes = await s3Client.GetObjectAsync(getReq, cancellationToken);

@@ -82,7 +82,7 @@ namespace S3Append.Models
         internal PutObjectRequest ToPutObjectRequest(Stream existingData)
         {
             var compositeStream = new MemoryStream();
-            if(AutoResetStreamPosition && existingData.CanSeek)
+            if (existingData.CanSeek)
                 existingData.Seek(0, SeekOrigin.Begin);
             existingData.CopyTo(compositeStream);
 
@@ -98,7 +98,12 @@ namespace S3Append.Models
                 contentStream.CopyTo(compositeStream);
                 FilePath = null;
             }
-            else InputStream.CopyTo(compositeStream);
+            else if(InputStream is not null)
+            {
+                if (AutoResetStreamPosition && InputStream.CanSeek)
+                    InputStream.Seek(0, SeekOrigin.Begin);
+                InputStream.CopyTo(compositeStream);
+            }
 
             InputStream = compositeStream;
             AutoResetStreamPosition = true;
