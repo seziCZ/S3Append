@@ -32,10 +32,10 @@ namespace S3Append.Extensions
     /// </summary>
     public static class S3ClientExtensions
     {
-        // Must be 5 MiB <= PART_MIN_BYTES < PART_OPT_BYTES <= 5 GiB - PART_MIN_BYTES 
+        // Must be 5 MiB <= PART_MIN_BYTES > PART_MAX_BYTES - PART_MIN_BYTES <= 5 GiB - PART_MIN_BYTES
         // See https://docs.aws.amazon.com/AmazonS3/latest/userguide/qfacts.html
         internal static readonly long PART_MIN_BYTES = 5 * (long)Math.Pow(2, 20); // aka 5 MiB
-        internal static readonly long PART_OPT_BYTES = 4 * (long)Math.Pow(2, 30); // aka 4 GiB
+        internal static readonly long PART_MAX_BYTES = 5 * (long)Math.Pow(2, 30); // aka 5 GiB
 
         /// <summary>
         /// Appends data associated with provided <see cref="AppendObjectRequest"/> to referenced, S3 hosted object.
@@ -107,7 +107,7 @@ namespace S3Append.Extensions
 
         /// <summary>
         /// Divides provided object size into ranges that obey <see cref="PART_MIN_BYTES"/> 
-        /// and <see cref="PART_OPT_BYTES"/> S3 multipart upload/copy specific requirements.
+        /// and <see cref="PART_MAX_BYTES"/> S3 multipart upload/copy specific requirements.
         /// See https://docs.aws.amazon.com/AmazonS3/latest/userguide/qfacts.html
         /// </summary>
         /// <param name="totalBytes">Total bytes to be transfered during multi part copy</param>
@@ -121,26 +121,27 @@ namespace S3Append.Extensions
 
             var firstByte = 0L;
             var result = new List<Range>();
-            while (firstByte < totalBytes - 1)
+            while (firstByte < totalBytes)
             {
                 var lastByte =
-                    firstByte + PART_OPT_BYTES - 1 < totalBytes - 1 ?
-                    firstByte + PART_OPT_BYTES - 1 :
+                    firstByte + PART_MAX_BYTES - 1 < totalBytes - 1 ?
+                    firstByte + PART_MAX_BYTES - 1 :
                     totalBytes - 1;
 
                 result.Add(Tuple.Create(firstByte, lastByte));
                 firstByte = lastByte + 1;
             }
 
-            var last = result[^1];
-            if (enforceSize && last.Item2 - last.Item1 < PART_MIN_BYTES - 1)
+            var lastRange = result[^1];
+            if (enforceSize && lastRange.Item2 - lastRange.Item1 < PART_MIN_BYTES - 1)
             {
                 // To obey "minimal part size" requirement, last "too small" part is being
-                // appended to the penultimate part. Note that resulting part might, however,
-                // hit "maximal part size" limit so PART_OPT_BYTES needs to be configred sensibly.
-                var newRange = Tuple.Create(result[^2].Item1, last.Item2);
+                // enriched with PART_MIN_BYTES portion of penultimate part's data.
+                var newPenultimate = Tuple.Create(result[^2].Item1, result[^2].Item2 - PART_MIN_BYTES);
+                var newLast = Tuple.Create(newPenultimate.Item2 + 1, lastRange.Item2);
                 result.RemoveRange(result.Count - 2, 2);
-                result.Add(newRange);
+                result.Add(newPenultimate);
+                result.Add(newLast);
             }
 
             return result;
