@@ -33,9 +33,10 @@ namespace S3Append.Extensions
     public static class S3ClientExtensions
     {
         // Must be 5 MiB <= PART_MIN_BYTES > PART_MAX_BYTES - PART_MIN_BYTES <= 5 GiB - PART_MIN_BYTES
+        // TODO: Make PART_MAX_BYTES user configurable to allow for performance/cost finetuning
         // See https://docs.aws.amazon.com/AmazonS3/latest/userguide/qfacts.html
         internal static readonly long PART_MIN_BYTES = 5 * (long)Math.Pow(2, 20); // aka 5 MiB
-        internal static readonly long PART_MAX_BYTES = 5 * (long)Math.Pow(2, 30); // aka 5 GiB
+        internal static readonly long PART_MAX_BYTES = 1 * (long)Math.Pow(2, 30); // aka 1 GiB
 
         /// <summary>
         /// Appends data associated with provided <see cref="AppendObjectRequest"/> to referenced, S3 hosted object.

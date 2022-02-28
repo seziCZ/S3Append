@@ -17,7 +17,7 @@
     <PackageTags>AWS SDK;S3;Append</PackageTags>    
     <LangVersion>9.0</LangVersion>
     <OutputType>Library</OutputType>
-    <Version>0.0.1</Version>
+    <Version>0.0.2</Version>
   </PropertyGroup>
 
   <ItemGroup>
