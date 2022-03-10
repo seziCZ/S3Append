@@ -24,33 +24,40 @@ namespace S3Append.Models
 {
     /// <summary>
     /// A request to be used when appending data to S3 bucket hosted object.
-    /// TODO: Let user fine-tune multipart upload/copy relevant configuration
     /// </summary>
     public class AppendObjectRequest : PutObjectRequest
     {
 
-        //
-        // Summary:
-        //     The MD5 of the customer encryption key specified in the CopySourceServerSideEncryptionCustomerProvidedKey
-        //     property. The MD5 is base 64 encoded. This field is optional, the SDK will calculate
-        //     the MD5 if this is not set.
+        /// <summary>
+        /// The requested size of object chunks (parts) to be copied during data append operation.
+        /// The smaller the size the better the performance - but also the higher the price.
+        /// If not set, value defaults to <see cref="S3ClientExtensions.PART_MAX_BYTES"/>
+        /// See https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html
+        /// </summary>
+        public long? PartMaxBytes { get; set; }
+
+        /// <summary>
+        /// The MD5 of the customer encryption key specified in the CopySourceServerSideEncryptionCustomerProvidedKey
+        //  property. The MD5 is base 64 encoded. This field is optional, the SDK will calculate
+        //  the MD5 if this is not set.
+        /// </summary>
         public string CopySourceServerSideEncryptionCustomerProvidedKeyMD5 { get; set; }
 
-        //
-        // Summary:
-        //     The customer provided encryption key for the source object of the copy.
-        //     Important: Amazon S3 does not store the encryption key you provide.
+        /// <summary>
+        /// The customer provided encryption key for the source object of the copy.
+        //  Important: Amazon S3 does not store the encryption key you provide.
+        /// </summary>
         public string CopySourceServerSideEncryptionCustomerProvidedKey { get; set; }
 
-        //
-        // Summary:
-        //     The Server-side encryption algorithm to be used with the customer provided key.
+        /// <summary>
+        /// The Server-side encryption algorithm to be used with the customer provided key.
+        /// </summary>
         public ServerSideEncryptionCustomerMethod CopySourceServerSideEncryptionCustomerMethod { get; set; }
 
-        //
-        // Summary:
-        //     Specifies a particular version of the source object to copy. By default the latest
-        //     version is copied.
+        /// <summary>
+        ///  Specifies a particular version of the source object to copy. By default the latest
+        //   version is copied.
+        /// </summary>
         public string SourceVersionId { get; set; }
 
         /// <summary>

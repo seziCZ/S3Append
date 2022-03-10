@@ -17,7 +17,29 @@ namespace Tests.Unit.Extensions
             var tooSmall = S3ClientExtensions.PART_MIN_BYTES - 1;
 
             // act
-            S3ClientExtensions.GetPartRanges(tooSmall);
+            S3ClientExtensions.GetPartRanges(tooSmall, S3ClientExtensions.PART_MAX_BYTES);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException))]
+        public void TestSmallParts()
+        {
+            // setup
+            var tooSmall = S3ClientExtensions.PART_MIN_BYTES - 1;
+
+            // act
+            S3ClientExtensions.GetPartRanges(tooSmall, 2 * S3ClientExtensions.PART_MIN_BYTES - 1);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException))]
+        public void TestBigParts()
+        {
+            // setup
+            var tooSmall = S3ClientExtensions.PART_MIN_BYTES - 1;
+
+            // act
+            S3ClientExtensions.GetPartRanges(tooSmall, S3ClientExtensions.PART_MAX_BYTES + 1);
         }
 
         [TestMethod]
@@ -31,7 +53,7 @@ namespace Tests.Unit.Extensions
             };
 
             // act
-            var result = S3ClientExtensions.GetPartRanges(justRight);
+            var result = S3ClientExtensions.GetPartRanges(justRight, S3ClientExtensions.PART_MAX_BYTES);
 
             // assert
             Assert.IsNotNull(result);
@@ -49,7 +71,7 @@ namespace Tests.Unit.Extensions
             };
 
             // act
-            var result = S3ClientExtensions.GetPartRanges(stillRight);
+            var result = S3ClientExtensions.GetPartRanges(stillRight, S3ClientExtensions.PART_MAX_BYTES);
 
             // assert
             Assert.IsNotNull(result);
@@ -69,7 +91,7 @@ namespace Tests.Unit.Extensions
             };
 
             // act
-            var result = S3ClientExtensions.GetPartRanges(justWrong);
+            var result = S3ClientExtensions.GetPartRanges(justWrong, S3ClientExtensions.PART_MAX_BYTES);
 
             // assert
             Assert.IsNotNull(result);
@@ -91,7 +113,7 @@ namespace Tests.Unit.Extensions
             };
 
             // act
-            var result = S3ClientExtensions.GetPartRanges(expSize);
+            var result = S3ClientExtensions.GetPartRanges(expSize, S3ClientExtensions.PART_MAX_BYTES);
 
             // assert
             Assert.IsNotNull(result);
@@ -112,7 +134,7 @@ namespace Tests.Unit.Extensions
             };
 
             // act
-            var result = S3ClientExtensions.GetPartRanges(expSize);
+            var result = S3ClientExtensions.GetPartRanges(expSize, S3ClientExtensions.PART_MAX_BYTES);
 
             // assert
             Assert.IsNotNull(result);
@@ -136,7 +158,7 @@ namespace Tests.Unit.Extensions
             };
 
             // act
-            var result = S3ClientExtensions.GetPartRanges(expSize);
+            var result = S3ClientExtensions.GetPartRanges(expSize, S3ClientExtensions.PART_MAX_BYTES);
 
             // assert
             Assert.IsNotNull(result);
@@ -160,7 +182,7 @@ namespace Tests.Unit.Extensions
             };
 
             // act
-            var result = S3ClientExtensions.GetPartRanges(expSize);
+            var result = S3ClientExtensions.GetPartRanges(expSize, S3ClientExtensions.PART_MAX_BYTES);
 
             // assert
             Assert.IsNotNull(result);
@@ -184,7 +206,7 @@ namespace Tests.Unit.Extensions
             };
 
             // act
-            var result = S3ClientExtensions.GetPartRanges(expSize);
+            var result = S3ClientExtensions.GetPartRanges(expSize, S3ClientExtensions.PART_MAX_BYTES);
 
             // assert
             Assert.IsNotNull(result);

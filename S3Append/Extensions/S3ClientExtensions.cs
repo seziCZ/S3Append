@@ -36,7 +36,7 @@ namespace S3Append.Extensions
         // TODO: Make PART_MAX_BYTES user configurable to allow for performance/cost finetuning
         // See https://docs.aws.amazon.com/AmazonS3/latest/userguide/qfacts.html
         internal static readonly long PART_MIN_BYTES = 5 * (long)Math.Pow(2, 20); // aka 5 MiB
-        internal static readonly long PART_MAX_BYTES = 1 * (long)Math.Pow(2, 30); // aka 1 GiB
+        internal static readonly long PART_MAX_BYTES = 5 * (long)Math.Pow(2, 30); // aka 5 GiB
 
         /// <summary>
         /// Appends data associated with provided <see cref="AppendObjectRequest"/> to referenced, S3 hosted object.
@@ -68,7 +68,7 @@ namespace S3Append.Extensions
                 var initMultipartReq = request.ToMultiPartInitRequest();
                 initMultipartRes = await s3Client.InitiateMultipartUploadAsync(initMultipartReq, cancellationToken);
 
-                var copyPartRanges = GetPartRanges(metadata.ContentLength);
+                var copyPartRanges = GetPartRanges(metadata.ContentLength, request.PartMaxBytes ?? PART_MAX_BYTES);
                 var uploadPartReq = request.ToUploadPartRequest(initMultipartRes.UploadId, copyPartRanges.Count + 1);
                 var uploadPartResTask = s3Client.UploadPartAsync(uploadPartReq, cancellationToken)
                     .ContinueWith(t => t.Result.ETag, TaskContinuationOptions.ExecuteSynchronously);
@@ -112,21 +112,26 @@ namespace S3Append.Extensions
         /// See https://docs.aws.amazon.com/AmazonS3/latest/userguide/qfacts.html
         /// </summary>
         /// <param name="totalBytes">Total bytes to be transfered during multi part copy</param>
+        /// <param name="partMaxBytes">Maximal allowed size of a single copy part</param>
         /// <param name="enforceSize">Ensures last range is bigger than <see cref="PART_MIN_BYTES"/></param>
         /// <returns>Collection of ranges to be used when issuing multipart upload/copy requests towards S3</returns>
-        internal static List<Range> GetPartRanges(long totalBytes, bool enforceSize = true)
+        internal static List<Range> GetPartRanges(long totalBytes, long partMaxBytes, bool enforceSize = true)
         {
             if (totalBytes < PART_MIN_BYTES)
                 throw new ArgumentException("Multipart copy could not be used when appending to S3 " +
                     $"object with size smaller than {PART_MIN_BYTES} bytes.", nameof(totalBytes));
+
+            if (partMaxBytes < 2 * PART_MIN_BYTES || partMaxBytes > PART_MAX_BYTES)
+                throw new ArgumentException("Requested part size does not fall within allowed " +
+                    $"{2 * PART_MIN_BYTES} - {PART_MAX_BYTES} bytes interval.", nameof(partMaxBytes));
 
             var firstByte = 0L;
             var result = new List<Range>();
             while (firstByte < totalBytes)
             {
                 var lastByte =
-                    firstByte + PART_MAX_BYTES - 1 < totalBytes - 1 ?
-                    firstByte + PART_MAX_BYTES - 1 :
+                    firstByte + partMaxBytes - 1 < totalBytes - 1 ?
+                    firstByte + partMaxBytes - 1 :
                     totalBytes - 1;
 
                 result.Add(Tuple.Create(firstByte, lastByte));
