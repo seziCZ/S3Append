@@ -21,7 +21,7 @@ Since AWS S3 is not a [block storage system](https://en.wikipedia.org/wiki/Block
 ## Implications
 Thanks to high degree of parallelism and almost unbounded network bandwidth, AWS S3 copy operations are lightning fast (compared to the naive download-update-upload approach). Moreover, internal AWS data transfers are [free of charge](https://aws.amazon.com/s3/pricing/), making the proposed solution a no brainer in situation where client logic resides outside of AWS cloud. Still, cost is the key aspect to be considered as (compared to the naive approach) at least five AWS S3 requests must be issued for every and each `AppendObjectAsync` method call (see [Implementation](#implementation) for details).
 
-> Note that single `UploadPartCopy` operation could only copy up to 5 GiB of data. That said, append to an object with size of 5 TB would result in (at least) 1004 copy requests issued by `S3 Append` logic.
+> Note that single `UploadPartCopy` operation could only copy up to 5 GiB of data. That said, append to an object with size of 5 TB would result in (at least) 1004 requests issued by `S3 Append` logic.
 
 
 ## Usage
@@ -48,3 +48,18 @@ public static async Task Main(string[] args)
 ```
 
 result in (the same) `fa5ec9042bc3` object containing proverbial `Hello world!`.
+
+## Performance
+Server side copy will always has superior performance to client mediated copy. Nonetheless, even AWS's network is subject to the laws of physics so at some point, for objects which are gigabytes in size, copy operation could become unsatisfactorily slow. Problem could be partially mitigated by increasing copy parallelism which could be achieved by decreasing copy part size (5 GiB by default):
+
+```
+var request = new AppendObjectRequest
+{
+	BucketName = "109a6d191b67",
+	Key = "fa5ec9042bc3",
+	ContentBody = " world!",
+	PartMaxBytes = (long) Math.Pow(2, 24); // aka 16 MiB
+};
+```
+
+Keep in mind, however, that the smaller the copy part size, the more requests generated and, consequently, the more costs for respective data append operation.
