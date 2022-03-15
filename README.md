@@ -9,7 +9,7 @@
 `S3 Append` provides [AppendObjectAsync](./S3Append/Extensions/S3ClientExtensions.cs) extension method for [.NET AWS SDK S3 client](https://docs.aws.amazon.com/sdkfornet/v3/apidocs/index.html?page=TIS3.html&tocid=Amazon_S3_IAmazonS3), capable of appending data to existing S3 hosted objects.
 
 ## Implementation
-Since AWS S3 is not a [block storage system](https://en.wikipedia.org/wiki/Block-level_storage), content of hosted objects could not be altered in situ. That said, one would have to download, update and upload (override) the object again but such approach suffers of multiple problems (network throughput dependency, high memory requirements, etc.) that makes it practically unusable. For this reason, `S3 Append` implementation relies on [AWS S3 multipart copy](https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html) internally to avoid a need for data to be downloaded first:
+Since AWS S3 is not a [block storage system](https://en.wikipedia.org/wiki/Block-level_storage), content of persisted objects could not be altered in situ. One would have to download, update and upload (override) the object again but such approach suffers of multiple problems (network throughput dependency, high memory requirements, etc.) that make it practically unusable. For this reason, `S3 Append` implementation relies on [AWS S3 multipart copy](https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html) internally to avoid a need for data to be downloaded first:
 
 * [Get to-be-updated object's metadata](https://docs.aws.amazon.com/AmazonS3/latest/API/API_HeadObject.html) to determine its size 
 * [Create multipart upload](https://docs.aws.amazon.com/AmazonS3/latest/API/API_CreateMultipartUpload.html) through which data is to be copied/uploaded
@@ -19,13 +19,13 @@ Since AWS S3 is not a [block storage system](https://en.wikipedia.org/wiki/Block
 
 
 ## Implications
-Thanks to high degree of parallelism and almost unbounded network bandwidth, AWS S3 copy operations are lightning fast (compared to the naive download-update-upload approach). Moreover, internal AWS data transfers are [free of charge](https://aws.amazon.com/s3/pricing/), making the proposed solution a no brainer in situation where client logic resides outside of AWS cloud. Still, cost is the key aspect to be considered as (compared to the naive approach) at least five AWS S3 requests must be issued for every and each `AppendObjectAsync` method call (see [Implementation](#implementation) for details).
+Thanks to high degree of parallelism and almost unbounded network bandwidth, AWS S3 copy operations are considerably faster than naive download-update-upload approach. Moreover, internal AWS data transfers are [free of charge](https://aws.amazon.com/s3/pricing/), making the proposed solution a no brainer in situation where client logic resides outside of AWS cloud. Still, cost is the key aspect to be considered as at least five AWS S3 requests must be issued for every and each `AppendObjectAsync` method call (see [Implementation](#implementation) for details).
 
 > Note that single `UploadPartCopy` operation could only copy up to 5 GiB of data. That said, append to an object with size of 5 TB would result in (at least) 1004 requests issued by `S3 Append` logic.
 
 
 ## Usage
-When imported into scope, `AppendObjectAsync` could be used in in a straightforward fashion. Consider S3 bucket `109a6d191b67` hosting object `fa5ec9042bc3` with plain text content `Hello`. Following code would, when executed,
+When imported into scope, `AppendObjectAsync` could be used in in a straightforward fashion. Consider S3 bucket `109a6d191b67` hosting `fa5ec9042bc3` object with plain text content `Hello`. Following code would, when executed,
 
 ```
 using Amazon.S3;
@@ -50,7 +50,7 @@ public static async Task Main(string[] args)
 result in (the same) `fa5ec9042bc3` object containing proverbial `Hello world!`.
 
 ## Performance
-Server side copy will always has superior performance to client mediated copy. Nonetheless, even AWS's network is subject to the laws of physics so at some point, for objects which are gigabytes in size, copy operation could become unsatisfactorily slow. Problem could be partially mitigated by increasing copy parallelism which could be achieved by decreasing copy part size (5 GiB by default):
+Server side copy will always has superior performance to client mediated copy. Nonetheless, even AWS's network is subject to the laws of physics so at some point, for objects which are gigabytes in size, copy operation could become unsatisfactorily slow. Problem could be partially mitigated by decreasing copy part size (and, thus, increasing copy parallelism) which is 5 GiB by default:
 
 ```
 var request = new AppendObjectRequest
@@ -58,8 +58,8 @@ var request = new AppendObjectRequest
 	BucketName = "109a6d191b67",
 	Key = "fa5ec9042bc3",
 	ContentBody = " world!",
-	PartMaxBytes = (long) Math.Pow(2, 24); // aka 16 MiB
+	PartMaxBytes = (long) Math.Pow(2, 27) // aka 128 MiB
 };
 ```
 
-Keep in mind, however, that the smaller the copy part size, the more requests generated and, consequently, the more costs for respective data append operation.
+Keep in mind, however, that the smaller the copy part size, the more requests generated and, consequently, the more costs associated with respective data append operation.
